@@ -1,39 +1,42 @@
-package com.example.mycontants.data.repository
+package com.example.mycontants.service
 
-import android.content.ContentResolver
+import android.content.Context
+import android.content.pm.PackageManager
+import android.database.ContentObserver
+import android.net.Uri
+import android.os.Handler
 import android.provider.ContactsContract
+import android.util.Log
+import androidx.core.app.ActivityCompat
+import com.example.mycontants.data.Constants
 import com.example.mycontants.data.database.Contact
-import com.example.mycontants.data.database.ContactsDao
-import com.example.mycontants.data.database.Converters
-import com.example.mycontants.model.ContactModel
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
-class LocalContactRepository @Inject constructor(
-    private val contentResolver: ContentResolver,
-    private val contactsDao: ContactsDao,
-    private val contactMapper: EntityToModelMapper = EntityToModelMapper(),
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val converter: Converters = Converters()
-) : ContactRepository {
-    override suspend fun getContacts(): List<ContactModel> = withContext(dispatcher) {
-        val contactList = loadContact()
-        contactsDao.insertContacts(contacts = contactList.toTypedArray())
-        return@withContext contactsDao.getAllContacts().map {
-            contactMapper.mapFromEntityToModel(contact = it)
-        }
-    }
+class ContObserver(
+    handler: Handler,
+    private val applicationContext: Context,
+) : ContentObserver(handler) {
 
-    override suspend fun getLastUpdateDate(): Long  = withContext(dispatcher){
-        return@withContext contactsDao.getLastUpdateDate()
+    override fun onChange(selfChange: Boolean, uri: Uri?) {
+        super.onChange(selfChange, uri)
+        if (!selfChange && ActivityCompat.checkSelfPermission(
+                applicationContext,
+                android.Manifest.permission.READ_CONTACTS
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+            loadContact()
     }
 
     private fun loadContact(): List<Contact> {
+        val lastUpdateFromDatabase =
+            applicationContext.getSharedPreferences(Constants.SharedPrefName,Context.MODE_PRIVATE)
+                .getLong(Constants.lastUpdate, 0).toString()
+        val contentResolver = applicationContext.contentResolver
         val contactsList: MutableList<Contact> = mutableListOf()
         val cursor = contentResolver.query(
-            ContactsContract.Contacts.CONTENT_URI, null, null, null,
+            ContactsContract.Contacts.CONTENT_URI,
+            null,
+            ContactsContract.Contacts.CONTACT_LAST_UPDATED_TIMESTAMP + ">=?",
+            arrayOf(lastUpdateFromDatabase),
             null
         )
 
@@ -79,9 +82,9 @@ class LocalContactRepository @Inject constructor(
         } else {
             //   toast("No contacts available!")
         }
+        Log.e("from Observer",contactsList.size.toString())
         cursor!!.close()
         return contactsList
     }
-
 
 }
