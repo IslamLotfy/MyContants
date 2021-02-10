@@ -46,7 +46,6 @@ dependencies {
     implementation "androidx.annotation:annotation:$androidXAnnotations"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
     implementation "androidx.test.espresso:espresso-idling-resource:$espressoVersion"
-    implementation "androidx.room:room-runtime:$roomVersion"
     implementation "androidx.constraintlayout:constraintlayout:$contraintLayoutVersion"
     kapt "androidx.room:room-compiler:$roomVersion"
 

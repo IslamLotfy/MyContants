@@ -2,9 +2,9 @@ package com.example.mycontants.data.repository
 
 import android.app.Application
 import android.content.ContentResolver
+import com.example.mycontants.data.database.ContactsDao
 import dagger.Module
 import dagger.Provides
-import dagger.android.DaggerApplication
 import javax.inject.Singleton
 
 @Module
@@ -15,7 +15,7 @@ class RepositoryModule {
 
     @Singleton
     @Provides
-    fun provideRepository(contentResolver: ContentResolver): ContactRepository{
-        return LocalContactRepository(contentResolver = contentResolver)
+    fun provideRepository(contentResolver: ContentResolver,contactsDao: ContactsDao): ContactRepository{
+        return LocalContactRepository(contentResolver = contentResolver,contactsDao = contactsDao)
     }
 }
