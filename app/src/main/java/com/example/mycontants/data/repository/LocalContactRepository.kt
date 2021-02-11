@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.provider.ContactsContract
 import com.example.mycontants.data.database.Contact
 import com.example.mycontants.data.database.ContactsDao
-import com.example.mycontants.data.database.Converters
 import com.example.mycontants.model.ContactModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -16,25 +15,33 @@ class LocalContactRepository @Inject constructor(
     private val contactsDao: ContactsDao,
     private val contactMapper: EntityToModelMapper = EntityToModelMapper(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val converter: Converters = Converters()
 ) : ContactRepository {
+
     override suspend fun getContacts(): List<ContactModel> = withContext(dispatcher) {
-        val contactList = loadContact()
-        contactsDao.insertContacts(contacts = contactList.toTypedArray())
-        return@withContext contactsDao.getAllContacts().map {
+        var contactList = contactsDao.getAllContacts()
+        if (contactList.isNullOrEmpty()) {
+            contactsDao.insertContacts(contacts = loadContact().toTypedArray())
+            contactList = contactsDao.getAllContacts()
+        }
+        return@withContext contactList.map {
             contactMapper.mapFromEntityToModel(contact = it)
         }
     }
 
-    override suspend fun getLastUpdateDate(): Long  = withContext(dispatcher){
-        return@withContext contactsDao.getLastUpdateDate()
+    override suspend fun updateContacts() = withContext(dispatcher){
+        val lastUpdateFromDatabase = getLastUpdateDate().toString()
+        val updatedContacts = loadContact(selection = ContactsContract.Contacts.CONTACT_LAST_UPDATED_TIMESTAMP + ">=?",selectionArgs =  arrayOf(lastUpdateFromDatabase))
+        updatedContacts.map {
+            contactsDao.updateContact(it)
+        }
+        return@withContext
     }
 
-    private fun loadContact(): List<Contact> {
+    private fun loadContact(selection: String? = null, selectionArgs: Array<String>? = null): List<Contact> {
         val contactsList: MutableList<Contact> = mutableListOf()
         val cursor = contentResolver.query(
-            ContactsContract.Contacts.CONTENT_URI, null, null, null,
-            null
+            ContactsContract.Contacts.CONTENT_URI, null, selection, selectionArgs,
+            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
         )
 
         if (cursor != null && cursor.count > 0) {
@@ -83,5 +90,7 @@ class LocalContactRepository @Inject constructor(
         return contactsList
     }
 
-
+    private suspend fun getLastUpdateDate(): Long  = withContext(dispatcher){
+        return@withContext contactsDao.getLastUpdateDate()
+    }
 }

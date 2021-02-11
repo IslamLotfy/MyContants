@@ -1,14 +1,21 @@
 package com.example.mycontants.service
 
-import android.app.Service
 import android.content.Intent
 import android.os.*
 import android.provider.ContactsContract
+import android.util.Log
+import com.example.mycontants.data.repository.ContactRepository
+import dagger.android.AndroidInjection
+import dagger.android.DaggerService
+import javax.inject.Inject
 
 
-class ContactWatchService : Service() {
+class ContactWatchService : DaggerService() {
     private lateinit var mServiceLooper: Looper
     private lateinit var mServiceHandler: ServiceHandler
+
+    @Inject
+    lateinit var repository: ContactRepository
 
     private inner class ServiceHandler(mServiceLooper: Looper) : Handler(mServiceLooper) {
         override fun handleMessage(msg: Message) {
@@ -21,11 +28,14 @@ class ContactWatchService : Service() {
     }
 
     private fun startContactObserver() {
+        Log.e("repooooo",repository.toString())
+
         try {
             application.contentResolver.registerContentObserver(
                 ContactsContract.Contacts.CONTENT_URI, true, ContObserver(
                     Handler(mServiceLooper),
-                    applicationContext
+                    applicationContext,
+                    repository
                 )
             )
         } catch (e: Exception) {
@@ -38,6 +48,7 @@ class ContactWatchService : Service() {
         thread.start()
         mServiceLooper = thread.looper
         mServiceHandler = ServiceHandler(mServiceLooper)
+        AndroidInjection.inject(this)
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {

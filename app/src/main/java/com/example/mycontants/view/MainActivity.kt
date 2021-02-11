@@ -1,17 +1,13 @@
 package com.example.mycontants.view
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.example.mycontants.data.Constants
 import com.example.mycontants.databinding.ActivityMainBinding
-import com.example.mycontants.model.ContactModel
 import com.example.mycontants.service.ContactWatchService
 import dagger.android.support.DaggerAppCompatActivity
 import javax.inject.Inject
@@ -20,7 +16,6 @@ import javax.inject.Inject
 class MainActivity : DaggerAppCompatActivity() {
 
     private val PERMISSIONS_REQUEST_READ_CONTACTS = 100
-    private val contactsList: MutableList<ContactModel> = mutableListOf()
     private lateinit var mainActivityBinding: ActivityMainBinding
     private lateinit var contactsAdapter: ContactsAdapter
     private lateinit var mainViewModel: MainViewModel
@@ -36,21 +31,15 @@ class MainActivity : DaggerAppCompatActivity() {
         lifecycle.addObserver(mainViewModel)
         loadContacts()
         observeOnContactsList()
-        observeOnLastUpdate()
         startService(Intent(baseContext, ContactWatchService::class.java))
-    }
-
-    private fun observeOnLastUpdate() {
-        mainViewModel.getLastUpdate()
-        mainViewModel.lastUpdate.observe(this, Observer {
-            applicationContext.getSharedPreferences(Constants.SharedPrefName, Context.MODE_PRIVATE)
-                .edit().putLong(Constants.lastUpdate, it).apply()
-            Log.e("lastupdate",it.toString())
-        })
+        mainActivityBinding.swiperefresh.setOnRefreshListener {
+            loadContacts()
+        }
     }
 
     private fun observeOnContactsList() {
         mainViewModel.contactsList.observe(this, Observer {
+            mainActivityBinding.swiperefresh.isRefreshing = false
             contactsAdapter = ContactsAdapter(it)
             mainActivityBinding.rvContacts.adapter = contactsAdapter
         })

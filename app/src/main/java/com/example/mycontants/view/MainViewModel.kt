@@ -10,7 +10,6 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(private val contactRepository: ContactRepository) :
     ViewModel(), LifecycleObserver {
     val contactsList = MutableLiveData<List<ContactModel>>()
-    val lastUpdate = MutableLiveData<Long>()
 
     fun getContacts(){
         viewModelScope.launch(Dispatchers.IO){
@@ -18,9 +17,4 @@ class MainViewModel @Inject constructor(private val contactRepository: ContactRe
         }
     }
 
-    fun getLastUpdate(){
-        viewModelScope.launch(Dispatchers.IO){
-            lastUpdate.postValue(contactRepository.getLastUpdateDate())
-        }
-    }
 }

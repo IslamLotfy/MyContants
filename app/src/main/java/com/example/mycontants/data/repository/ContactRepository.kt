@@ -5,5 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface ContactRepository {
     suspend fun getContacts(): List<ContactModel>
-    suspend fun getLastUpdateDate(): Long
+    suspend fun updateContacts()
 }
