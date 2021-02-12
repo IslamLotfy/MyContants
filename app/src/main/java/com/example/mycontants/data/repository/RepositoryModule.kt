@@ -15,7 +15,19 @@ class RepositoryModule {
 
     @Singleton
     @Provides
-    fun provideRepository(contentResolver: ContentResolver,contactsDao: ContactsDao): ContactRepository{
-        return LocalContactRepository(contentResolver = contentResolver,contactsDao = contactsDao)
+    fun provideContactsDataSource(contactsDao: ContactsDao): ContactsDataSource{
+        return LocalContactsDataSource(contactsDao = contactsDao)
+    }
+
+    @Singleton
+    @Provides
+    fun providePhoneBookDataSource(contentResolver: ContentResolver): PhoneBookDataSource{
+        return ContactsPhoneBookDataSource(contentResolver = contentResolver)
+    }
+
+    @Singleton
+    @Provides
+    fun provideRepository(phoneBookDataSource: PhoneBookDataSource,contactsDataSource: ContactsDataSource): ContactRepository{
+        return LocalContactRepository(phoneBookDataSource = phoneBookDataSource,contactsDataSource = contactsDataSource)
     }
 }

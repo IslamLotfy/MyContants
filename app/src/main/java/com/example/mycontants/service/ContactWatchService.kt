@@ -28,8 +28,6 @@ class ContactWatchService : DaggerService() {
     }
 
     private fun startContactObserver() {
-        Log.e("repooooo",repository.toString())
-
         try {
             application.contentResolver.registerContentObserver(
                 ContactsContract.Contacts.CONTENT_URI, true, ContObserver(

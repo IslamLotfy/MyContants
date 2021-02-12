@@ -16,7 +16,7 @@ interface ContactsDao {
     @Update
     suspend fun updateContact(contact: Contact): Int
 
-    @Delete
-    suspend fun deleteContact(contact: Contact): Int
+    @Query("DELETE FROM contact WHERE contactId = :contactID OR contact_name = :contactName")
+    suspend fun deleteContact(contactID: String, contactName: String): Int
 
 }
