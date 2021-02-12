@@ -8,3 +8,7 @@
 -add lastUpdated field to contact and write it's max value to sharedPref to read it easily in contentObserver
 -inject repository into service to move the data update to it
 -update the rows of database when changed from phone-book
+-add PhoneBookDataSource to load data from phone-book
+-inject PhoneBookDataSource into repository
+-add fakeDataSource for database and phone-book
+-test repository and EntityToModelMapper
