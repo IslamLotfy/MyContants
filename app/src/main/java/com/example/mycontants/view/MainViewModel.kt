@@ -9,11 +9,11 @@ import javax.inject.Inject
 
 class MainViewModel @Inject constructor(private val contactRepository: ContactRepository) :
     ViewModel(), LifecycleObserver {
-    val contactsList = MutableLiveData<List<ContactModel>>()
+    val contactsList = MutableLiveData<Map<Char,List<ContactModel>>>()
 
     fun getContacts(){
         viewModelScope.launch(Dispatchers.IO){
-            contactsList.postValue(contactRepository.getContacts())
+            contactsList.postValue(contactRepository.getContacts().groupBy { it.contactName[0] })
         }
     }
 
